@@ -3,18 +3,11 @@ import os
 import signal
 import sys
 import time
+import Error
 
 reload(sys)
 # sys.setdefaultencoding("UTF-8")
 base_dir = os.path.split(os.path.abspath(sys.argv[0]))[0]
-
-
-class GracefulExitException(Exception):
-    @staticmethod
-    def sigterm_handler(signum, frame):
-        raise GracefulExitException()
-
-    pass
 
 
 class GracefulExitEvent(object):
@@ -24,7 +17,7 @@ class GracefulExitEvent(object):
 
         # Use signal handler to throw exception which can be caught
         # by worker process to allow graceful exit.
-        signal.signal(signal.SIGTERM, GracefulExitException.sigterm_handler)
+        signal.signal(signal.SIGTERM, Error.AppExitException.sigterm_handler)
         pass
 
     def reg_worker(self, wp):
@@ -45,7 +38,7 @@ class GracefulExitEvent(object):
 
                 print "main process(%d) exit." % os.getpid()
                 break
-            except GracefulExitException:
+            except Error.AppExitException:
                 self.notify_stop()
                 print "main process(%d) got GracefulExitException." % os.getpid()
             except Exception, ex:
@@ -62,7 +55,7 @@ def worker_proc(gee):
         while not gee.is_stop():
             # do task job here
             print ".",
-            time.sleep(1)
+            gee.wait(1)
         else:
             print ""
             print "worker process(%d) got exit event." % os.getpid()
@@ -74,7 +67,7 @@ def worker_proc(gee):
             time.sleep(1)
             print "[%d] 1" % os.getpid()
 
-    except GracefulExitException:
+    except Error.AppExitException:
         print "worker(%d) got GracefulExitException" % os.getpid()
     except Exception, ex:
         print "Exception:", ex
@@ -113,7 +106,7 @@ if __name__ == '__main__':
     run_path = base_dir + '/Run_Log/'
     if not os.path.isdir(run_path):
         os.makedirs(run_path)
-    daemonize('/dev/null', log_path + 'trace.log', log_path + 'error.log')
+    # daemonize('/dev/null', log_path + 'trace.log', log_path + 'error.log')
 
     # signal.signal(signal.SIGTERM, stop)
 

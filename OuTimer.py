@@ -1,3 +1,11 @@
+# -*- coding: UTF-8 -*-
+"""
+
+@author: oShine <oyjqdlp@126.com>
+@link: https://github.com/ouyangjunqiu/ou.py
+定时器，每隔一段时间执行一次
+"""
+
 import threading
 
 

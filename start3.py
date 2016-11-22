@@ -5,16 +5,9 @@ import sys
 import threading
 import time
 import OuTimer
+from Error import AppExitException
 
 base_dir = os.path.split(os.path.abspath(sys.argv[0]))[0]
-
-
-class GracefulExitException(Exception):
-    @staticmethod
-    def sigterm_handler(signum, frame):
-        raise GracefulExitException()
-
-    pass
 
 
 class GracefulExitEvent(object):
@@ -24,7 +17,7 @@ class GracefulExitEvent(object):
 
         # Use signal handler to throw exception which can be caught
         # by worker process to allow graceful exit.
-        signal.signal(signal.SIGTERM, GracefulExitException.sigterm_handler)
+        signal.signal(signal.SIGTERM, AppExitException.sigterm_handler)
         pass
 
     def reg_worker(self, wp):
@@ -49,7 +42,7 @@ class GracefulExitEvent(object):
                     wp.apply_async(worker_proc, args=())
                 time.sleep(1)
 
-            except GracefulExitException:
+            except AppExitException:
                 self.notify_stop()
                 print "main process(%d) got GracefulExitException." % os.getpid()
                 break
@@ -116,7 +109,7 @@ if __name__ == '__main__':
     thread = OuTimer.Timer(5, _handle_task, args=())
     thread.start()
 
-    signal.signal(signal.SIGTERM, GracefulExitException.sigterm_handler)
+    signal.signal(signal.SIGTERM, AppExitException.sigterm_handler)
 
     print "main process(%d) loop" % os.getpid()
 
@@ -126,7 +119,7 @@ if __name__ == '__main__':
             print "main process(%d) running." % (os.getpid())
             time.sleep(0.2)
 
-        except GracefulExitException:
+        except AppExitException:
             # if thread.isAlive():
             #     exit_event.set()
             # else:
