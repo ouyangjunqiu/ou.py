@@ -19,17 +19,18 @@ def worker_proc(pool, queue, mysql, lock):
     :type mysql: Mysql.Mysql
     :type lock: multiprocessing.Lock
     """
-    data = queue.get()
-    print "%s" % (data,)
-    if data is None:
-        return
+    print "111111"
+    #data = queue.get()
+    #print "%s" % (data,)
+    #if data is None:
+    #    return
 
-    row = mysql.getOne("select * from shop where nick=?", [data])
+    #row = mysql.getOne("select * from shop where nick=?", [data])
 
-    with lock:
-        fsock = open("log/worker.txt", "a")
-        fsock.write("worker(%r) " % (row,))
-        fsock.close()
+    #with lock:
+    #   fsock = open("log/worker.txt", "a")
+    #  fsock.write("worker(%r) " % (row,))
+    # fsock.close()
 
 
 class MainServer(object):
@@ -46,7 +47,6 @@ class MainServer(object):
         # Use signal handler to throw exception which can be caught
         # by worker process to allow graceful exit.
         signal.signal(signal.SIGTERM, AppExitException.sigterm_handler)
-        pass
 
     @staticmethod
     def create():
@@ -84,8 +84,6 @@ class MainServer(object):
           :type mysql: Mysql.Mysql
         """
         queue.put("妙乐乐官方旗舰店")
-
-    pass
 
 
 def daemonize(stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
