@@ -11,6 +11,27 @@ import OuTimer
 base_dir = os.path.split(os.path.abspath(sys.argv[0]))[0]
 
 
+def worker_proc(pool, queue, mysql, lock):
+    """
+
+    :type pool: multiprocessing.Pool
+    :type queue: multiprocessing.Queue
+    :type mysql: Mysql.Mysql
+    :type lock: multiprocessing.Lock
+    """
+    data = queue.get()
+    print "%s" % (data,)
+    if data is None:
+        return
+
+    row = mysql.getOne("select * from shop where nick=?", [data])
+
+    with lock:
+        fsock = open("log/worker.txt", "a")
+        fsock.write("worker(%r) " % (row,))
+        fsock.close()
+
+
 class MainServer(object):
     def __init__(self):
         self._db_connection = Mysql.Mysql()
@@ -67,28 +88,6 @@ class MainServer(object):
     pass
 
 
-def worker_proc(pool, queue, mysql, lock):
-
-    """
-
-    :type pool: multiprocessing.Pool
-    :type queue: multiprocessing.Queue
-    :type mysql: Mysql.Mysql
-    :type lock: multiprocessing.Lock
-    """
-    data = queue.get()
-    print "%s" % (data,)
-    if data is None:
-        return
-
-    row = mysql.getOne("select * from shop where nick=?", [data])
-
-    with lock:
-        fsock = open("log/worker.txt", "a")
-        fsock.write("worker(%r) " % (row,))
-        fsock.close()
-
-
 def daemonize(stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     try:
         pid = os.fork()
@@ -119,7 +118,7 @@ if __name__ == '__main__':
     run_path = base_dir + '/Run_Log/'
     if not os.path.isdir(run_path):
         os.makedirs(run_path)
-    #daemonize('/dev/null', log_path + 'trace.log', log_path + 'error.log')
+    # daemonize('/dev/null', log_path + 'trace.log', log_path + 'error.log')
 
     import sys
 
