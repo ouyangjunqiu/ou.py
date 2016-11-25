@@ -14,8 +14,10 @@ base_dir = os.path.split(os.path.abspath(sys.argv[0]))[0]
 class MainServer(object):
     def __init__(self):
         self._db_connection = Mysql.Mysql()
-        self._pool = multiprocessing.Pool(8)
         self._queue = multiprocessing.Queue()
+
+        self._pool = multiprocessing.Pool(8)
+
         self._timer = OuTimer.Timer(5, MainServer._handle_task, args=(self._queue, self._db_connection))
         self._timer.start()
 
