@@ -11,7 +11,7 @@ import OuTimer
 base_dir = os.path.split(os.path.abspath(sys.argv[0]))[0]
 
 
-def worker_proc(queue, lock):
+def worker_proc():
     """
 
     :type queue: multiprocessing.Queue
@@ -62,7 +62,7 @@ class MainServer(object):
         while True:
             try:
 
-                self._pool.apply_async(worker_proc, args=(self._queue, self._lock))
+                self._pool.apply_async(worker_proc, args=())
 
                 time.sleep(0.2)
 
