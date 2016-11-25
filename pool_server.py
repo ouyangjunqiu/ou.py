@@ -11,22 +11,23 @@ import OuTimer
 base_dir = os.path.split(os.path.abspath(sys.argv[0]))[0]
 
 
-def worker_proc(pool, queue, mysql, lock):
+def worker_proc(queue, lock):
     """
 
-    :type pool: multiprocessing.Pool
     :type queue: multiprocessing.Queue
-    :type mysql: Mysql.Mysql
     :type lock: multiprocessing.Lock
     """
     print "111111"
+
     #data = queue.get()
     #print "%s" % (data,)
     #if data is None:
     #    return
+    mysql = Mysql.Mysql()
 
-    #row = mysql.getOne("select * from shop where nick=?", [data])
+    row = mysql.getOne("select * from cps_shop where nick='妙乐乐官方旗舰店'")
 
+    print row
     #with lock:
     #   fsock = open("log/worker.txt", "a")
     #  fsock.write("worker(%r) " % (row,))
@@ -35,7 +36,9 @@ def worker_proc(pool, queue, mysql, lock):
 
 class MainServer(object):
     def __init__(self):
+
         self._db_connection = Mysql.Mysql()
+
         self._queue = multiprocessing.Queue()
         self._lock = multiprocessing.Lock()
 
@@ -59,7 +62,7 @@ class MainServer(object):
         while True:
             try:
 
-                self._pool.apply_async(worker_proc, args=(self._pool, self._queue, self._db_connection, self._lock))
+                self._pool.apply_async(worker_proc, args=(self._queue, self._lock))
 
                 time.sleep(0.2)
 

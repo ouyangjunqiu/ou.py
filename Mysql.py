@@ -29,20 +29,20 @@ class Mysql(object):
 
     def __init__(self):
         # 数据库构造函数，从连接池中取出连接，并生成操作游标
-        self._conn = Mysql.__getConn()
+        self._conn = Mysql.getConn()
         self._cursor = self._conn.cursor()
 
     @staticmethod
-    def __getConn():
+    def getConn():
         """
         @summary: 静态方法，从连接池中取出连接
         @return MySQLdb.connection
         """
         if Mysql.__pool is None:
-            __pool = PooledDB(creator=MySQLdb, mincached=1, maxcached=20,
+            Mysql.__pool = PooledDB(creator=MySQLdb, mincached=1, maxcached=10,
                               host=Config.DBHOST, port=Config.DBPORT, user=Config.DBUSER, passwd=Config.DBPWD,
                               db=Config.DBNAME, use_unicode=False, charset=Config.DBCHAR, cursorclass=DictCursor)
-        return __pool.connection()
+        return Mysql.__pool.connection()
 
     def getAll(self, sql, param=None):
         """
