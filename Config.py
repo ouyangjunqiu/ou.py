@@ -6,8 +6,8 @@
 数据库配置文件
 '''
 DBHOST = "localhost"
-DBPORT = 3306
-DBUSER = "root"
-DBPWD = "123456"
-DBNAME = "test"
+DBPORT = 33060
+DBUSER = "cps.da-mai.com"
+DBPWD = "cps@da-mai.com"
+DBNAME = "dmcark_cps"
 DBCHAR = "utf8"

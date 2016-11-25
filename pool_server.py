@@ -3,57 +3,80 @@ import os
 import signal
 import sys
 import time
-import Error
+from RuntimeError import AppExitException
+import Mysql
+import OuTimer
 
 base_dir = os.path.split(os.path.abspath(sys.argv[0]))[0]
 
 
-class GracefulExitEvent(object):
+class MainServer(object):
     def __init__(self):
-        self.workers = []
-        self.exit_event = multiprocessing.Event()
+        self._db_connection = Mysql.Mysql()
+        self._pool = multiprocessing.Pool(8)
+        self._queue = multiprocessing.SimpleQueue()
+        self._timer = OuTimer.Timer(5, MainServer._handle_task, args=(self._queue, self._db_connection))
+        self._timer.start()
 
         # Use signal handler to throw exception which can be caught
         # by worker process to allow graceful exit.
-        signal.signal(signal.SIGTERM, Error.AppExitException.sigterm_handler)
+        signal.signal(signal.SIGTERM, AppExitException.sigterm_handler)
         pass
 
-    def reg_worker(self, wp):
-        self.workers.append(wp)
-        pass
+    @staticmethod
+    def create():
+        server = MainServer()
+        assert isinstance(server, MainServer)
+        server.start()
 
-    def is_stop(self):
-        return self.exit_event.is_set()
+    def start(self):
 
-    def notify_stop(self):
-        for wp in self.workers:
-            wp.terminate()
-
-        for wp in self.workers:
-            wp.join()
-
-    def wait_all(self):
         while True:
             try:
 
-                for wp in self.workers:
-                    wp.apply_async(worker_proc, args=())
+                self._pool.apply_async(worker_proc, args=(self._pool, self._queue, self._db_connection))
+
                 time.sleep(0.2)
 
-            except Error.AppExitException:
-                self.notify_stop()
+            except AppExitException:
+
                 print "main process(%d) got GracefulExitException." % os.getpid()
                 break
             except Exception, ex:
-                self.notify_stop()
                 print "main process(%d) got unexpected Exception: %r" % (os.getpid(), ex)
                 break
-        pass
+
+        self._queue.put(None)
+        self._timer.terminate()
+        self._pool.terminate()
+        self._db_connection.dispose()
+
+    @staticmethod
+    def _handle_task(queue, mysql):
+        """
+
+          :type queue: multiprocessing.SimpleQueue
+          :type mysql: Mysql.Mysql
+        """
+        queue.put("妙乐乐官方旗舰店")
+
+    pass
 
 
-def worker_proc():
+def worker_proc(pool,queue,mysql):
 
-    print "worker(%d) start ..." % os.getpid()
+    """
+
+    :type pool: multiprocessing.Pool
+    :type queue: multiprocessing.SimpleQueue
+    :type mysql: Mysql.Mysql
+    """
+    data = queue.get()
+    if data is None:
+        return
+
+    row = mysql.getOne("select * from shop where nick=?", [data])
+    print "worker(%r) start ..." % (row,)
 
 
 def daemonize(stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
@@ -86,20 +109,11 @@ if __name__ == '__main__':
     run_path = base_dir + '/Run_Log/'
     if not os.path.isdir(run_path):
         os.makedirs(run_path)
-    daemonize('/dev/null', log_path + 'trace.log', log_path + 'error.log')
-
-    # signal.signal(signal.SIGTERM, stop)
+    #daemonize('/dev/null', log_path + 'trace.log', log_path + 'error.log')
 
     import sys
 
     print "main process(%d) start" % os.getpid()
 
-    gee = GracefulExitEvent()
-
-    pool = multiprocessing.Pool(8)
-    #pool.terminate()
-
-    gee.reg_worker(pool)
-
-    gee.wait_all()
+    MainServer.create()
     sys.exit(0)

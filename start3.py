@@ -5,7 +5,7 @@ import sys
 import threading
 import time
 import OuTimer
-from Error import AppExitException
+from RuntimeError import AppExitException
 
 base_dir = os.path.split(os.path.abspath(sys.argv[0]))[0]
 

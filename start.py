@@ -3,7 +3,7 @@ import os
 import signal
 import sys
 import time
-import Error
+import RuntimeError
 
 reload(sys)
 # sys.setdefaultencoding("UTF-8")
@@ -17,7 +17,7 @@ class GracefulExitEvent(object):
 
         # Use signal handler to throw exception which can be caught
         # by worker process to allow graceful exit.
-        signal.signal(signal.SIGTERM, Error.AppExitException.sigterm_handler)
+        signal.signal(signal.SIGTERM, RuntimeError.AppExitException.sigterm_handler)
         pass
 
     def reg_worker(self, wp):
@@ -38,7 +38,7 @@ class GracefulExitEvent(object):
 
                 print "main process(%d) exit." % os.getpid()
                 break
-            except Error.AppExitException:
+            except RuntimeError.AppExitException:
                 self.notify_stop()
                 print "main process(%d) got GracefulExitException." % os.getpid()
             except Exception, ex:
@@ -67,7 +67,7 @@ def worker_proc(gee):
             time.sleep(1)
             print "[%d] 1" % os.getpid()
 
-    except Error.AppExitException:
+    except RuntimeError.AppExitException:
         print "worker(%d) got GracefulExitException" % os.getpid()
     except Exception, ex:
         print "Exception:", ex
