@@ -5,7 +5,7 @@
 @link: https://github.com/ouyangjunqiu/ou.py
 数据库配置文件
 '''
-DBHOST = "localhost"
+DBHOST = "192.168.13.27"
 DBPORT = 33060
 DBUSER = "cps.da-mai.com"
 DBPWD = "cps@da-mai.com"
