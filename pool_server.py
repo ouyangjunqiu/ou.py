@@ -15,6 +15,7 @@ class MainServer(object):
     def __init__(self):
         self._db_connection = Mysql.Mysql()
         self._queue = multiprocessing.Queue()
+        self._lock = multiprocessing.Lock()
 
         self._pool = multiprocessing.Pool(8)
 
@@ -37,7 +38,7 @@ class MainServer(object):
         while True:
             try:
 
-                self._pool.apply_async(worker_proc, args=(self._pool, self._queue, self._db_connection))
+                self._pool.apply_async(worker_proc, args=(self._pool, self._queue, self._db_connection, self._lock))
 
                 time.sleep(0.2)
 
@@ -58,7 +59,7 @@ class MainServer(object):
     def _handle_task(queue, mysql):
         """
 
-          :type queue: multiprocessing.SimpleQueue
+          :type queue: multiprocessing.Queue
           :type mysql: Mysql.Mysql
         """
         queue.put("妙乐乐官方旗舰店")
@@ -66,20 +67,26 @@ class MainServer(object):
     pass
 
 
-def worker_proc(pool,queue,mysql):
+def worker_proc(pool, queue, mysql, lock):
 
     """
 
     :type pool: multiprocessing.Pool
-    :type queue: multiprocessing.SimpleQueue
+    :type queue: multiprocessing.Queue
     :type mysql: Mysql.Mysql
+    :type lock: multiprocessing.Lock
     """
     data = queue.get()
+    print "%s" % (data,)
     if data is None:
         return
 
     row = mysql.getOne("select * from shop where nick=?", [data])
-    print "worker(%r) start ..." % (row,)
+
+    with lock:
+        fsock = open("log/worker.txt", "a")
+        fsock.write("worker(%r) " % (row,))
+        fsock.close()
 
 
 def daemonize(stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
